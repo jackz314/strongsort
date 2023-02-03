@@ -20,23 +20,24 @@ def xyxy2xywh(x):
 class StrongSORT(object):
     def __init__(
         self,
-        model_weights,
-        device,
-        fp16,
+        model_weights="osnet_x0_25_msmt17.pt",
+        device=torch.device("cpu"),
+        fp16=False,
         max_dist=0.2,
         max_iou_distance=0.7,
         max_age=70,
         n_init=3,
         nn_budget=100,
-        mc_lambda=0.995,
         ema_alpha=0.9,
+        mc_lambda=0.995,
     ):
 
         self.model = ReIDDetectMultiBackend(weights=model_weights, device=device, fp16=fp16)
 
         self.max_dist = max_dist
         metric = NearestNeighborDistanceMetric("cosine", self.max_dist, nn_budget)
-        self.tracker = Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
+        self.tracker = Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init,
+                               ema_alpha=ema_alpha, mc_lambda=mc_lambda)
 
     def update(self, xyxys, confs, classes, ori_img):
         # xyxys = dets[:, :4]
