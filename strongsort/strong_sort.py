@@ -7,6 +7,8 @@ from strongsort.sort.nn_matching import NearestNeighborDistanceMetric
 from strongsort.sort.tracker import Tracker
 
 def xyxy2xywh(x):
+    if len(x) == 0:  # no boxes
+        return x
     # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
     y[:, 0] = (x[:, 0] + x[:, 2]) / 2  # x center
@@ -36,15 +38,15 @@ class StrongSORT(object):
         metric = NearestNeighborDistanceMetric("cosine", self.max_dist, nn_budget)
         self.tracker = Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
 
-    def update(self, dets, ori_img):
-        xyxys = dets[:, :4]
-        xyxys = dets[:, 0:4]
-        confs = dets[:, 4]
-        clss = dets[:, 5]
+    def update(self, xyxys, confs, classes, ori_img):
+        # xyxys = dets[:, :4]
+        # confs = dets[:, 4]
+        # classes = dets[:, 5]
 
-        classes = clss.numpy()
-        xywhs = xyxy2xywh(xyxys.numpy())
-        confs = confs.numpy()
+        # ensure dimensions
+        xyxys = np.atleast_1d(xyxys)
+        xywhs = xyxy2xywh(xyxys)
+
         self.height, self.width = ori_img.shape[:2]
 
         # generate detections
@@ -58,7 +60,7 @@ class StrongSORT(object):
 
         # update tracker
         self.tracker.predict()
-        self.tracker.update(detections, clss, confs)
+        self.tracker.update(detections, classes, confs)
 
         # output bbox identities
         outputs = []
@@ -85,6 +87,8 @@ class StrongSORT(object):
 
     @staticmethod
     def _xywh_to_tlwh(bbox_xywh):
+        if len(bbox_xywh) == 0:
+            return bbox_xywh
         if isinstance(bbox_xywh, np.ndarray):
             bbox_tlwh = bbox_xywh.copy()
         elif isinstance(bbox_xywh, torch.Tensor):

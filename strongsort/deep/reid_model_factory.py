@@ -115,7 +115,7 @@ def download_url(url, dst):
     sys.stdout.write("\n")
 
 
-def load_pretrained_weights(model, weight_path):
+def load_pretrained_weights(model, weight_path, device=torch.device('cpu'), encoding="latin1"):
     r"""Loads pretrianed weights to model.
 
     Features::
@@ -125,13 +125,14 @@ def load_pretrained_weights(model, weight_path):
     Args:
         model (nn.Module): network model.
         weight_path (str): path to pretrained weights.
+        device (torch.device): device where the model is loaded.
 
     Examples::
         >>> from torchreid.utils import load_pretrained_weights
         >>> weight_path = 'log/my_model/model-best.pth.tar'
         >>> load_pretrained_weights(model, weight_path)
     """
-    checkpoint = torch.load(weight_path)
+    checkpoint = torch.load(weight_path, encoding=encoding, map_location=device)
     if "state_dict" in checkpoint:
         state_dict = checkpoint["state_dict"]
     else:

@@ -8,7 +8,6 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torchvision.transforms as T
-from yolov5.utils.general import check_requirements, check_version
 
 from strongsort.deep.models import build_model
 from strongsort.deep.reid_model_factory import (
@@ -74,6 +73,9 @@ class ReIDDetectMultiBackend(nn.Module):
         self.fp16 = fp16
         self.fp16 &= self.pt or self.jit or self.engine  # FP16
 
+        if isinstance(w, str):
+            w = Path(w)
+
         # Build transform functions
         self.device = device
         self.image_size = (256, 128)
@@ -99,12 +101,13 @@ class ReIDDetectMultiBackend(nn.Module):
                 exit()
 
         # Build model
-        self.model = build_model(model_name, num_classes=1, pretrained=not (w and w.is_file()), use_gpu=device)
+        use_gpu = False if "cpu" in str(device) else True
+        self.model = build_model(model_name, num_classes=1, pretrained=not (w and w.is_file()), use_gpu=use_gpu)
 
         if self.pt:  # PyTorch
             # populate model arch with weights
             if w and w.is_file() and w.suffix == ".pt":
-                load_pretrained_weights(self.model, w)
+                load_pretrained_weights(self.model, str(w.resolve()), self.device)
 
             self.model.to(device).eval()
             self.model.half() if self.fp16 else self.model.float()
