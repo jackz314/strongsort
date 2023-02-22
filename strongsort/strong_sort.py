@@ -4,6 +4,7 @@ import torch
 from strongsort.reid_multibackend import ReIDDetectMultiBackend
 from strongsort.sort.detection import Detection
 from strongsort.sort.nn_matching import NearestNeighborDistanceMetric
+from strongsort.sort.preprocessing import non_max_suppression
 from strongsort.sort.tracker import Tracker
 
 def xyxy2xywh(x):
@@ -30,14 +31,19 @@ class StrongSORT(object):
         nn_budget=100,
         ema_alpha=0.9,
         mc_lambda=0.995,
+        nms_max_overlap=1,
     ):
 
-        self.model = ReIDDetectMultiBackend(weights=model_weights, device=device, fp16=fp16)
+        if model_weights is None:
+            self.model = None
+        else:
+            self.model = ReIDDetectMultiBackend(weights=model_weights, device=device, fp16=fp16)
 
         self.max_dist = max_dist
         metric = NearestNeighborDistanceMetric("cosine", self.max_dist, nn_budget)
         self.tracker = Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init,
                                ema_alpha=ema_alpha, mc_lambda=mc_lambda)
+        self.nms_max_overlap = nms_max_overlap
 
     def update(self, xyxys, confs, classes, ori_img):
         # xyxys = dets[:, :4]
@@ -58,6 +64,8 @@ class StrongSORT(object):
         # run on non-maximum supression
         boxes = np.array([d.tlwh for d in detections])
         scores = np.array([d.confidence for d in detections])
+        indices = non_max_suppression(boxes, self.nms_max_overlap, scores)
+        detections = [detections[i] for i in indices]
 
         # update tracker
         self.tracker.predict()
