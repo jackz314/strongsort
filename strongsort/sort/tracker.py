@@ -66,7 +66,7 @@ class Tracker:
         for track in self.tracks:
             track.camera_update(previous_img, current_img)
 
-    def update(self, detections, classes, confidences):
+    def update(self, detections, classes, confidences, init_n_init=-1):
         """Perform measurement update and track management.
 
         Parameters
@@ -80,13 +80,15 @@ class Tracker:
 
         # Update track set.
         for track_idx, detection_idx in matches:
-            self.tracks[track_idx].update(detections[detection_idx], classes[detection_idx], confidences[detection_idx])
+            self.tracks[track_idx].update(detections[detection_idx], classes[detection_idx], confidences[detection_idx], init_n_init)
         for track_idx in unmatched_tracks:
             self.tracks[track_idx].mark_missed()
         for detection_idx in unmatched_detections:
             self._initiate_track(
                 detections[detection_idx], classes[detection_idx], confidences[detection_idx]
             )
+            
+        deleted_tracks = [t for t in self.tracks if t.is_deleted()]
         self.tracks = [t for t in self.tracks if not t.is_deleted()]
 
         # Update distance metric.
@@ -98,6 +100,7 @@ class Tracker:
             features += track.features
             targets += [track.track_id for _ in track.features]
         self.metric.partial_fit(np.asarray(features), np.asarray(targets), active_targets)
+        return deleted_tracks
 
     def _full_cost_metric(self, tracks, dets, track_indices, detection_indices):
         """

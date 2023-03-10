@@ -248,7 +248,7 @@ class Track:
         self.age += 1
         self.time_since_update += 1
 
-    def update(self, detection, class_id, conf):
+    def update(self, detection, class_id, conf, init_n_init=-1):
         """Perform Kalman filter measurement update step and update the feature
         cache.
         Parameters
@@ -270,7 +270,7 @@ class Track:
 
         self.hits += 1
         self.time_since_update = 0
-        if self.state == TrackState.Tentative and self.hits >= self._n_init:
+        if self.state == TrackState.Tentative and self.hits >= self._n_init if init_n_init < 0 else init_n_init:
             self.state = TrackState.Confirmed
 
     def mark_missed(self):

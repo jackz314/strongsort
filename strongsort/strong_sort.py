@@ -46,7 +46,7 @@ class StrongSORT(object):
                                ema_alpha=ema_alpha, mc_lambda=mc_lambda)
         self.nms_max_overlap = nms_max_overlap
 
-    def update(self, xyxys, confs, classes, ori_img):
+    def update(self, xyxys, confs, classes, ori_img, init_n_init=-1):
         # xyxys = dets[:, :4]
         # confs = dets[:, 4]
         # classes = dets[:, 5]
@@ -70,7 +70,7 @@ class StrongSORT(object):
 
         # update tracker
         self.tracker.predict()
-        self.tracker.update(detections, classes, confs)
+        deleted_tracks = self.tracker.update(detections, classes, confs, init_n_init)
 
         # output bbox identities
         outputs = []
@@ -87,7 +87,7 @@ class StrongSORT(object):
             outputs.append(np.array([x1, y1, x2, y2, track_id, class_id, conf]))
         if len(outputs) > 0:
             outputs = np.stack(outputs, axis=0)
-        return outputs
+        return outputs, deleted_tracks
 
     """
     TODO:
