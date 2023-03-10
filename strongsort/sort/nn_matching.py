@@ -67,8 +67,10 @@ def _nn_euclidean_distance(x, y):
     """
     # x_ = torch.from_numpy(np.asarray(x) / np.linalg.norm(x, axis=1, keepdims=True))
     # y_ = torch.from_numpy(np.asarray(y) / np.linalg.norm(y, axis=1, keepdims=True))
-    distances = distances = _pdist(x, y)
-    return np.maximum(0.0, torch.min(distances, axis=0)[0].numpy())
+    x_ = np.asarray(x) / np.linalg.norm(x, axis=1, keepdims=True)
+    y_ = np.asarray(y) / np.linalg.norm(y, axis=1, keepdims=True)
+    distances = distances = _pdist(x_, y_)
+    return np.maximum(0.0, np.min(distances, axis=0)[0])
 
 
 def _nn_cosine_distance(x, y):
@@ -85,10 +87,11 @@ def _nn_cosine_distance(x, y):
         A vector of length M that contains for each entry in `y` the
         smallest cosine distance to a sample in `x`.
     """
-    x_ = torch.from_numpy(np.asarray(x))
-    y_ = torch.from_numpy(np.asarray(y))
+    # x_ = torch.from_numpy(np.asarray(x))
+    # y_ = torch.from_numpy(np.asarray(y))
+    x_ = np.asarray(x)
+    y_ = np.asarray(y)
     distances = _cosine_distance(x_, y_)
-    distances = distances
     return distances.min(axis=0)
 
 
