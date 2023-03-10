@@ -32,6 +32,7 @@ class StrongSORT(object):
         ema_alpha=0.9,
         mc_lambda=0.995,
         nms_max_overlap=1,
+        distance_metric="cosine",
     ):
 
         if model_weights is None:
@@ -40,7 +41,7 @@ class StrongSORT(object):
             self.model = ReIDDetectMultiBackend(weights=model_weights, device=device, fp16=fp16)
 
         self.max_dist = max_dist
-        metric = NearestNeighborDistanceMetric("cosine", self.max_dist, nn_budget)
+        metric = NearestNeighborDistanceMetric(distance_metric, self.max_dist, nn_budget)
         self.tracker = Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init,
                                ema_alpha=ema_alpha, mc_lambda=mc_lambda)
         self.nms_max_overlap = nms_max_overlap
