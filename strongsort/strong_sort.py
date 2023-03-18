@@ -75,7 +75,7 @@ class StrongSORT(object):
         # output bbox identities
         outputs = []
         for track in self.tracker.tracks:
-            if not track.is_confirmed() or track.time_since_update > 1:
+            if not track.is_confirmed() or track.time_since_update > 0:  # only output confirmed tracks and tracks that have been updated
                 continue
 
             box = track.to_tlwh()
@@ -84,9 +84,9 @@ class StrongSORT(object):
             track_id = track.track_id
             class_id = track.class_id
             conf = track.conf
-            outputs.append(np.array([x1, y1, x2, y2, track_id, class_id, conf]))
-        if len(outputs) > 0:
-            outputs = np.stack(outputs, axis=0)
+            outputs.append([x1, y1, x2, y2, track_id, class_id, conf])
+        # if len(outputs) > 0:
+        #     outputs = np.stack(outputs, axis=0)
         return outputs, deleted_tracks
 
     """

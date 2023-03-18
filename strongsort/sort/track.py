@@ -80,6 +80,7 @@ class Track:
         if feature is not None:
             feature /= np.linalg.norm(feature)
             self.features.append(feature)
+        self.all_features = [*self.features]
 
         self.conf = conf
         self._n_init = n_init
@@ -263,6 +264,8 @@ class Track:
         )
 
         feature = detection.feature / np.linalg.norm(detection.feature)
+        if self.is_confirmed():  # only update all features history if track is confirmed
+            self.all_features.append(feature)
 
         smooth_feat = self.ema_alpha * self.features[-1] + (1 - self.ema_alpha) * feature
         smooth_feat /= np.linalg.norm(smooth_feat)
@@ -270,7 +273,7 @@ class Track:
 
         self.hits += 1
         self.time_since_update = 0
-        if self.state == TrackState.Tentative and self.hits >= self._n_init if init_n_init < 0 else init_n_init:
+        if self.state == TrackState.Tentative and self.hits >= (self._n_init if init_n_init < 0 else init_n_init):
             self.state = TrackState.Confirmed
 
     def mark_missed(self):
